@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ToolNova – Image Resizer, PDF Compressor, BG Remover</title>
+<style>
+:root{--p:#2563eb;--ok:#16a34a;--err:#991b1b;--bg:#f8fafc;--card:#fff;--bd:#e2e8f0;--t1:#1e293b;--t2:#64748b}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--t1);font-family:system-ui,'Segoe UI',sans-serif;line-height:1.5}
+.wrap{max-width:900px;margin:0 auto;padding:1.5rem 1rem}
+header{text-align:center;padding:1rem 0}
+.logo{font-size:2.2rem;font-weight:800;color:var(--p);margin:0}
+.tag{color:var(--t2);margin:.25rem 0 0;font-size:.95rem}
+.hero{text-align:center;margin:1.5rem 0}
+.hero h2{font-size:1.8rem;margin:0 0 .25rem}
+.hero p{color:var(--t2);margin:0}
+.tabs{display:flex;gap:.75rem;justify-content:center;flex-wrap:wrap;margin-bottom:1.5rem}
+.tab{font:inherit;font-weight:600;padding:.7rem 1.2rem;border:2px solid var(--bd);background:#fff;color:var(--t1);border-radius:10px;cursor:pointer;transition:all .2s}
+.tab.active{border-color:var(--p);background:#eff6ff;color:var(--p)}
+.tab:focus-visible,.drop:focus-visible,button:focus-visible{outline:3px solid #93c5fd;outline-offset:2px}
+.panel{display:none;background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:2rem}
+.panel.active{display:block}
+.panel h3{margin:0 0 .25rem;font-size:1.4rem}
+.note{color:var(--t2);font-size:.9rem;margin:0 0 1rem}
+.drop{border:2px dashed var(--bd);border-radius:12px;padding:2rem 1rem;text-align:center;cursor:pointer;color:var(--t2);transition:border-color .2s,background .2s}
+.drop.over{border-color:var(--p);background:#eff6ff}
+.drop.disabled{opacity:.5;pointer-events:none}
+.info{margin:1rem 0;font-size:.95rem}
+.controls{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin:1rem 0}
+.controls label{display:flex;flex-direction:column;gap:.3rem;font-size:.9rem;font-weight:600}
+.controls .full{grid-column:1/-1}
+input[type=number],select{font:inherit;padding:.55rem;border:1px solid var(--bd);border-radius:8px;background:#fff;color:var(--t1)}
+.chk{flex-direction:row!important;align-items:center;gap:.5rem!important;font-weight:500!important}
+.btn{font:inherit;font-weight:700;background:var(--p);color:#fff;border:0;border-radius:8px;padding:.75rem 1.4rem;cursor:pointer;text-decoration:none;display:inline-block}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.btn.ok{background:var(--ok)}
+.btn.ghost{background:#fff;color:var(--p);border:1px solid var(--p)}
+.status{padding:.75rem 1rem;border-radius:8px;margin:1rem 0;background:#fef3c7;color:#92400e;font-size:.95rem}
+.status.error{background:#fee2e2;color:var(--err)}
+.status.success{background:#dcfce7;color:#166534}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-top:1rem}
+.box{border:1px solid var(--bd);border-radius:10px;padding:.75rem;text-align:center;font-size:.9rem}
+.box img{max-width:100%;max-height:300px;border-radius:6px;display:block;margin:0 auto .5rem}
+.box.checker img{background:repeating-conic-gradient(#e2e8f0 0% 25%,#fff 0% 50%) 50%/20px 20px}
+.box b{display:block;margin-bottom:.4rem}
+[hidden]{display:none!important}
+footer{text-align:center;color:var(--t2);font-size:.9rem;padding:2rem 0 1rem}
+footer .btn{margin-top:.75rem;font-size:.9rem;padding:.5rem 1rem}
+@media (max-width:600px){.panel{padding:1rem}.grid,.controls{grid-template-columns:1fr}.tabs{flex-wrap:wrap}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <h1 class="logo">ToolNova</h1>
+  <p class="tag">100% browser-based · No sign-up · Files never leave your device</p>
+</header>
+<section class="hero">
+  <h2>Your Everyday Tools. Simplified.</h2>
+  <p>Compress PDFs, resize images, and remove backgrounds in seconds.</p>
+</section>
+<nav class="tabs" role="tablist">
+  <button class="tab active" data-tab="img" role="tab">🖼️ Image Resizer</button>
+  <button class="tab" data-tab="pdf" role="tab">📄 PDF Compressor</button>
+  <button class="tab" data-tab="bg" role="tab">✂️ BG Remover</button>
+</nav>
+
+<!-- TOOL 1 -->
+<main>
+<section class="panel active" id="panel-img">
+  <h3>Image Resizer &amp; Compressor</h3>
+  <p class="note">JPEG, PNG or WebP. Resize by pixels or percentage, then compress.</p>
+  <div class="drop" id="img-drop" tabindex="0" role="button">Drag &amp; drop an image here, or click to browse</div>
+  <input type="file" id="img-file" accept="image/jpeg,image/png,image/webp" hidden>
+  <div id="img-work" hidden>
+    <div class="info" id="img-info"></div>
+    <div class="controls">
+      <label class="full">Resize mode
+        <select id="img-mode"><option value="px">By Pixels</option><option value="pct">By Percentage</option></select></label>
+      <label id="img-wl">Width (px)<input type="number" id="img-w" min="1"></label>
+      <label id="img-hl">Height (px)<input type="number" id="img-h" min="1"></label>
+      <label id="img-pl" hidden>Percentage (1–100)<input type="number" id="img-pct" min="1" max="100" value="50"></label>
+      <label class="chk full"><input type="checkbox" id="img-lock" checked> Lock aspect ratio</label>
+      <label>Quality: <span id="img-qv">80%</span><input type="range" id="img-q" min="10" max="100" value="80"></label>
+      <label>Output format
+        <select id="img-fmt"><option value="jpeg">JPEG</option><option value="webp">WebP</option><option value="png">PNG</option></select>
+        <span class="note" id="img-pngnote" hidden>(PNG ignores quality)</span></label>
+    </div>
+    <button class="btn" id="img-go">Resize &amp; Compress</button>
+  </div>
+  <div class="status" id="img-status" hidden></div>
+  <div class="grid" id="img-result" hidden>
+    <div class="box"><b>Original</b><img id="img-orig" alt="Original"><span id="img-ometa"></span></div>
+    <div class="box"><b>Result</b><img id="img-new" alt="Result"><span id="img-nmeta"></span><br><br><a class="btn ok" id="img-dl">Download</a></div>
+  </div>
+</section>
+
+<!-- TOOL 2 -->
+<section class="panel" id="panel-pdf">
+  <h3>PDF Compressor</h3>
+  <p class="note">Text won't be selectable in output. Best for scanned documents/photos.</p>
+  <div class="drop" id="pdf-drop" tabindex="0" role="button">Drag &amp; drop a PDF here, or click to browse</div>
+  <input type="file" id="pdf-file" accept="application/pdf" hidden>
+  <div id="pdf-work" hidden>
+    <div class="info" id="pdf-info"></div>
+    <div class="controls"><label class="full">Quality: <span id="pdf-qv">65%</span><input type="range" id="pdf-q" min="20" max="95" value="65"></label></div>
+    <button class="btn" id="pdf-go">Compress PDF</button>
+  </div>
+  <div class="status" id="pdf-status" hidden></div>
+  <a class="btn ok" id="pdf-dl" hidden>Download compressed PDF</a>
+</section>
+
+<!-- TOOL 3 -->
+<section class="panel" id="panel-bg">
+  <h3>AI Background Remover</h3>
+  <p class="note">Runs an AI model in your browser. First use downloads ~40 MB, then it's cached.</p>
+  <div class="drop" id="bg-drop" tabindex="0" role="button">Drag &amp; drop an image here, or click to browse</div>
+  <input type="file" id="bg-file" accept="image/*" hidden>
+  <div class="status" id="bg-status" hidden></div>
+  <div class="grid" id="bg-result" hidden>
+    <div class="box"><b>Original</b><img id="bg-orig" alt="Original"></div>
+    <div class="box checker"><b>Background removed</b><img id="bg-new" alt="Result" hidden><br><a class="btn ok" id="bg-dl" hidden>Download PNG</a></div>
+  </div>
+</section>
+</main>
+
+<footer>
+  <p>All processing happens in your browser. No files are uploaded.</p>
+  <button class="btn ghost" id="zip-btn">Download Source as ZIP</button>
+</footer>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script>
+(() => {
+'use strict';
+// ===== Helpers =====
+const $ = id => document.getElementById(id);
+const fmtSize = b => b < 1024 ? `${b} B` : b < 1048576 ? `${(b / 1024).toFixed(1)} KB` : `${(b / 1048576).toFixed(2)} MB`;
+const setStatus = (el, msg, type = '') => { el.textContent = msg; el.className = 'status' + (type ? ' ' + type : ''); el.hidden = !msg; };
+const baseName = n => n.replace(/\.[^.]+$/, '');
+const savings = (orig, now) => {
+  const pct = Math.abs((1 - now / orig) * 100).toFixed(0);
+  return now < orig ? `${pct}% smaller` : now === orig ? 'same size' : `${pct}% larger`;
+};
+const wireDrop = (zone, input, onFile) => {
+  zone.addEventListener('click', () => input.click());
+  zone.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); input.click(); } });
+  ['dragenter', 'dragover'].forEach(ev => zone.addEventListener(ev, e => { e.preventDefault(); zone.classList.add('over'); }));
+  ['dragleave', 'drop'].forEach(ev => zone.addEventListener(ev, e => { e.preventDefault(); zone.classList.remove('over'); }));
+  zone.addEventListener('drop', e => { const f = e.dataTransfer.files[0]; if (f) onFile(f); });
+  input.addEventListener('change', () => { const f = input.files[0]; if (f) onFile(f); input.value = ''; });
+};
+const setDownload = (a, blob, name) => {
+  if (a.dataset.url) URL.revokeObjectURL(a.dataset.url);
+  const url = URL.createObjectURL(blob);
+  a.dataset.url = url; a.href = url; a.download = name; a.hidden = false;
+  return url;
+};
+const revoke = el => { if (el.dataset.url) { URL.revokeObjectURL(el.dataset.url); delete el.dataset.url; } };
+const loadImage = src => new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = () => rej(new Error('image load')); i.src = src; });
+
+// ===== Tabs =====
+document.querySelectorAll('.tab').forEach(tab => tab.addEventListener('click', () => {
+  document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t === tab));
+  document.querySelectorAll('.panel').forEach(p => p.classList.toggle('active', p.id === 'panel-' + tab.dataset.tab));
+}));
+
+// ===== Tool 1: Image Resizer =====
+(() => {
+  const st = $('img-status'), go = $('img-go'), drop = $('img-drop');
+  let file = null, ow = 0, oh = 0, origUrl = '', busy = false;
+  const mimes = { jpeg: ['image/jpeg', 'jpg'], webp: ['image/webp', 'webp'], png: ['image/png', 'png'] };
+
+  const onFile = async f => {
+    if (busy) return;
+    if (!/^image\/(jpeg|png|webp)$/.test(f.type)) { alert('Please select a valid image file'); return; }
+    try {
+      if (origUrl) URL.revokeObjectURL(origUrl);
+      origUrl = URL.createObjectURL(f);
+      const im = await loadImage(origUrl);
+      file = f; ow = im.naturalWidth; oh = im.naturalHeight;
+      $('img-w').value = ow; $('img-h').value = oh;
+      $('img-info').textContent = `${f.name} — ${ow} × ${oh} px — ${fmtSize(f.size)}`;
+      $('img-work').hidden = false; $('img-result').hidden = true; setStatus(st, '');
+    } catch (err) { console.error(err); setStatus(st, 'Could not read that image. Try another file.', 'error'); }
+  };
+  wireDrop(drop, $('img-file'), onFile);
+
+  $('img-w').addEventListener('input', e => { if ($('img-lock').checked && e.target.value) $('img-h').value = Math.max(1, Math.round(e.target.value * oh / ow)); });
+  $('img-h').addEventListener('input', e => { if ($('img-lock').checked && e.target.value) $('img-w').value = Math.max(1, Math.round(e.target.value * ow / oh)); });
+  $('img-mode').addEventListener('change', e => {
+    const pct = e.target.value === 'pct';
+    $('img-wl').hidden = $('img-hl').hidden = pct; $('img-pl').hidden = !pct;
+  });
+  $('img-q').addEventListener('input', e => $('img-qv').textContent = e.target.value + '%');
+  $('img-fmt').addEventListener('change', e => $('img-pngnote').hidden = e.target.value !== 'png');
+
+  go.addEventListener('click', async () => {
+    if (!file || busy) return;
+    busy = true; go.disabled = true; drop.classList.add('disabled');
+    let canvas = null;
+    try {
+      const fmt = $('img-fmt').value;
+      if (fmt === 'webp' && !document.createElement('canvas').toDataURL('image/webp').startsWith('data:image/webp')) {
+        setStatus(st, 'Your browser does not support WebP export. Choose JPEG or PNG.', 'error'); return;
+      }
+      let tw, th;
+      if ($('img-mode').value === 'pct') {
+        const p = Math.min(100, Math.max(1, parseFloat($('img-pct').value) || 50));
+        tw = Math.round(ow * p / 100); th = Math.round(oh * p / 100);
+      } else {
+        tw = parseInt($('img-w').value, 10) || ow; th = parseInt($('img-h').value, 10) || oh;
+      }
+      if (tw < 10 || th < 10) { setStatus(st, 'Target size is under 10 px — please use a larger size.', 'error'); return; }
+      setStatus(st, 'Processing…');
+      const im = await loadImage(origUrl);
+      canvas = document.createElement('canvas'); canvas.width = tw; canvas.height = th;
+      const ctx = canvas.getContext('2d');
+      if (fmt === 'jpeg') { ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, tw, th); }
+      ctx.imageSmoothingQuality = 'high';
+      ctx.drawImage(im, 0, 0, tw, th);
+      const [mime, ext] = mimes[fmt];
+      const blob = await new Promise(r => canvas.toBlob(r, mime, $('img-q').value / 100));
+      if (!blob) throw new Error('toBlob failed');
+      const url = setDownload($('img-dl'), blob, `${baseName(file.name)}-resized.${ext}`);
+      $('img-orig').src = origUrl; $('img-new').src = url;
+      $('img-ometa').textContent = `${ow} × ${oh} px · ${fmtSize(file.size)}`;
+      $('img-nmeta').textContent = `${tw} × ${th} px · ${fmtSize(blob.size)} · ${savings(file.size, blob.size)}`;
+      $('img-result').hidden = false;
+      setStatus(st, `Done! ${savings(file.size, blob.size)}.`, 'success');
+    } catch (err) { console.error(err); setStatus(st, 'Something went wrong while resizing. Please try again.', 'error'); }
+    finally { if (canvas) { canvas.width = canvas.height = 0; } busy = false; go.disabled = false; drop.classList.remove('disabled'); }
+  });
+})();
+
+// ===== Tool 2: PDF Compressor =====
+(() => {
+  const st = $('pdf-status'), go = $('pdf-go'), drop = $('pdf-drop');
+  let file = null, busy = false;
+
+  const onFile = f => {
+    if (busy) return;
+    if (f.type !== 'application/pdf' && !/\.pdf$/i.test(f.name)) { setStatus(st, 'Please select a valid PDF file', 'error'); return; }
+    file = f; revoke($('pdf-dl')); $('pdf-dl').hidden = true;
+    $('pdf-info').textContent = `${f.name} — ${fmtSize(f.size)}`;
+    $('pdf-work').hidden = false;
+    setStatus(st, f.size > 50 * 1048576 ? 'Large file (over 50 MB) — compression may be slow and use a lot of memory.' : '');
+  };
+  wireDrop(drop, $('pdf-file'), onFile);
+  $('pdf-q').addEventListener('input', e => $('pdf-qv').textContent = e.target.value + '%');
+
+  go.addEventListener('click', async () => {
+    if (!file || busy) return;
+    if (!window.pdfjsLib || !window.jspdf) { setStatus(st, 'PDF library failed to load. Check internet connection.', 'error'); return; }
+    if (file.size > 50 * 1048576 && !confirm('This file is over 50 MB and may be slow or run out of memory. Continue?')) return;
+    busy = true; go.disabled = true; drop.classList.add('disabled'); $('pdf-dl').hidden = true;
+    let doc = null;
+    try {
+      pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+      setStatus(st, 'Reading PDF…');
+      const data = await file.arrayBuffer();
+      doc = await pdfjsLib.getDocument({ data }).promise;
+      if (!doc.numPages) throw new Error('EMPTY');
+      const quality = $('pdf-q').value / 100;
+      let out = null;
+      for (let i = 1; i <= doc.numPages; i++) {
+        setStatus(st, `Processing page ${i} / ${doc.numPages}…`);
+        const page = await doc.getPage(i);
+        const vp = page.getViewport({ scale: 1.5 });
+        const canvas = document.createElement('canvas'); canvas.width = vp.width; canvas.height = vp.height;
+        const ctx = canvas.getContext('2d');
+        ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, canvas.width, canvas.height);
+        await page.render({ canvasContext: ctx, viewport: vp }).promise;
+        const img = canvas.toDataURL('image/jpeg', quality);
+        const w = vp.width * 0.75, h = vp.height * 0.75, orient = w > h ? 'l' : 'p';
+        if (!out) out = new jspdf.jsPDF({ orientation: orient, unit: 'pt', format: [w, h], compress: true });
+        else out.addPage([w, h], orient);
+        out.addImage(img, 'JPEG', 0, 0, w, h);
+        page.cleanup(); canvas.width = canvas.height = 0;
+        await new Promise(r => setTimeout(r));
+      }
+      const blob = out.output('blob');
+      setDownload($('pdf-dl'), blob, `compressed-${file.name}`);
+      const smaller = blob.size < file.size;
+      setStatus(st, `${fmtSize(file.size)} → ${fmtSize(blob.size)} (${smaller ? savings(file.size, blob.size) : 'larger (try lower quality)'})`, smaller ? 'success' : '');
+    } catch (err) {
+      console.error(err);
+      const msg = err && err.name === 'PasswordException' ? 'Password-protected PDFs not supported'
+        : err && err.message === 'EMPTY' ? 'This PDF has no pages.'
+        : err && err.name === 'InvalidPDFException' ? 'Please select a valid PDF file'
+        : 'Could not compress this PDF. It may be corrupted or the PDF library failed to load.';
+      setStatus(st, msg, 'error');
+    } finally { if (doc) doc.destroy(); busy = false; go.disabled = false; drop.classList.remove('disabled'); }
+  });
+})();
+
+// ===== Tool 3: AI Background Remover =====
+(() => {
+  const st = $('bg-status'), drop = $('bg-drop'), input = $('bg-file');
+  let busy = false, removeBg = null, modelReady = false, origUrl = '';
+  const CDN = 'https://cdn.jsdelivr.net/npm/@imgly/background-removal@1.5.8/+esm';
+
+  const onFile = async f => {
+    if (busy) return;
+    if (!f.type.startsWith('image/')) { setStatus(st, 'Please select a valid image', 'error'); return; }
+    busy = true; drop.classList.add('disabled'); input.disabled = true;
+    try {
+      if (origUrl) URL.revokeObjectURL(origUrl);
+      origUrl = URL.createObjectURL(f);
+      $('bg-orig').src = origUrl; $('bg-new').hidden = true; $('bg-dl').hidden = true; revoke($('bg-dl'));
+      $('bg-result').hidden = false;
+      if (f.size > 10 * 1048576) setStatus(st, 'Large image — may take longer');
+      if (!removeBg) {
+        setStatus(st, 'Loading AI model (first time ~40 MB download)…');
+        try { removeBg = (await import(CDN)).removeBackground || (await import(CDN)).default; }
+        catch (err) { console.error(err); setStatus(st, 'Model download failed. Check internet connection and try again.', 'error'); return; }
+      }
+      setStatus(st, modelReady ? 'Removing background…' : 'Loading AI model (first time ~40 MB download)…');
+      let blob;
+      try {
+        blob = await removeBg(f, { progress: (key) => { if (!/^fetch/.test(key)) setStatus(st, 'Removing background…'); } });
+      } catch (err) {
+        console.error(err);
+        const offline = !navigator.onLine || /fetch|network|load/i.test(String(err && err.message));
+        setStatus(st, offline && !modelReady ? 'Model download failed. Check internet connection and try again.' : 'Background removal failed. Try another image or retry.', 'error');
+        return;
+      }
+      modelReady = true;
+      const url = setDownload($('bg-dl'), blob, `no-bg-${baseName(f.name)}.png`);
+      $('bg-new').src = url; $('bg-new').hidden = false;
+      setStatus(st, 'Done! Background removed.', 'success');
+    } catch (err) { console.error(err); setStatus(st, 'Something went wrong. Please try again.', 'error'); }
+    finally { busy = false; drop.classList.remove('disabled'); input.disabled = false; }
+  };
+  wireDrop(drop, input, onFile);
+})();
+
+// ===== ZIP download of source =====
+$('zip-btn').addEventListener('click', async () => {
+  try {
+    if (!window.JSZip) { alert('ZIP library failed to load. Check internet connection.'); return; }
+    let html;
+    try { const r = await fetch(location.href); if (!r.ok) throw new Error(); html = await r.text(); }
+    catch { html = '<!DOCTYPE html>\n' + document.documentElement.outerHTML; }
+    const zip = new JSZip();
+    zip.file('index.html', html);
+    const blob = await zip.generateAsync({ type: 'blob' });
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'toolnova.zip';
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  } catch (err) { console.error(err); alert('Could not create the ZIP. Please try again.'); }
+});
+})();
+</script>
+</body>
+</html>
